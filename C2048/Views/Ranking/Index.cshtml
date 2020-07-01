@@ -1,0 +1,35 @@
+﻿
+@{
+    ViewBag.Title = "排行榜";
+    var list = ViewBag.RankingList as List<Model.UserGameLog>;
+}
+    <div class="panel panel-default ">
+        <div class="panel-heading">
+            <h3 class="panel-title">排行榜</h3>
+        </div>
+        <div class="panel-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <td>名次</td>
+                        <td>得分</td>
+                        <td>用户</td>
+                        <td>时间</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < list.Count; i++)
+                    {
+                    <tr>
+                        <td>@(i + 1)</td>
+                        <td>@list[i].Score</td>
+                        <td>@list[i].UserID</td>
+                        <td>@list[i].CreateTime</td>
+                    </tr>
+                    }
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+

@@ -1,0 +1,316 @@
+﻿@{
+    ViewBag.Title = "1024";
+    var GameData = ViewBag.ShowData as Model.GameInfo;
+}
+<script src="~/Scripts/vue.js"></script>
+<div id="v-box">
+    <div>
+        <h1 data-toggle="modal" data-target="#Login_Box">欢迎:{{UserInfo.UserID?UserInfo.UserID:"游客"}}</h1>
+        <h2>分数:{{Score}}    最高:{{MaxScore?MaxScore:Score}}</h2>
+    </div>
+    <table class="table-bordered" v-on:keyup="KeyDown($event)" style="border:10px">
+        <tr v-for="(item,index) in ShowData">
+            <td v-for="(item2,index2) in item" v-bind:style="NumStyle[item2]" style="width:100px;height:100px;text-align:center; border:5px solid rgb(195, 171, 148)">
+                {{item2==0?"":item2}}
+            </td>
+        </tr>
+    </table>
+    <div role="dialog" class="modal fade bs-example-modal-sm" id="Submit_Box">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                    <h4 class="modal-title">游戏结束</h4>
+                </div>
+                <div class="modal-body text-right">
+                    <button data-dismiss="modal" class="btn btn-primary btn-sm" v-on:click="ScoreSubmit(1)">提交战绩</button>
+                    <button data-dismiss="modal" class="btn btn-danger btn-sm" v-on:click="ScoreSubmit(0)">重新开始</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div role="dialog" class="modal fade bs-example-modal-sm" id="Login_Box">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                    <h4 class="modal-title">登陆</h4>
+                </div>
+                <div class="modal-body text-left">
+                    <div class="form-group">
+                        <label for="username">用户名:</label>
+                        <input type="text" id="uid" class="form-control" placeholder="输入用户名" v-model="LoginUser.uid">
+                        <label style="color:red" v-show="!LoginUser.uid">用户名不能为空</label>
+                    </div>
+                    <div class="form-group">
+                        <label for="username">密码:</label>
+                        <input type="password" id="pwd" class="form-control" placeholder="输入密码" v-model="LoginUser.pwd">
+                        <label style="color:red" v-show="!LoginUser.pwd">密码不能为空</label>
+                    </div>
+                    <div class="form-group">
+                        <button @*data-dismiss="modal"*@ class="btn btn-danger btn-sm" v-on:click="Login()">登陆</button>
+                        <label>注：新用户直接注册</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+    var vm = new Vue({
+        el: "#v-box",
+        data: {
+            MaxScore: "@ViewBag.MaxScore",
+            NumStyle: {
+                0: {
+                    backgroundColor: "rgb(204,192,180)",
+                },
+                2: {
+                    backgroundColor: "rgb(237,227,217)",
+                    color: "rgb(118,108,99)",
+                    fontSize:"70px"
+                },
+                4: {
+                    backgroundColor: "rgb(239,224,203)",
+                    color: "rgb(119,107,95)",
+                    fontSize:"70px"
+                },
+                8: {
+                    backgroundColor: "rgb(242,176,126)",
+                    color: "rgb(254,242,231)",
+                    fontSize:"70px"
+                },
+                16: {
+                    backgroundColor: "rgb(250,150,90)",
+                    color: "rgb(249,227,229)",
+                    fontSize:"65px"
+                },
+                32: {
+                    backgroundColor: "rgb(250,122,99)",
+                    color: "rgb(247,247,247)",
+                    fontSize:"65px"
+                },
+                64: {
+                    backgroundColor: "rgb(250,91,63)",
+                    color: "rgb(247,247,247)",
+                    fontSize:"65px"
+                },
+                128: {
+                    backgroundColor: "rgb(238,227,17)",
+                    color: "rgb(247,247,247)",
+                    fontSize:"60px"
+                },
+                256: {
+                    backgroundColor: "rgb(246,207,78)",
+                    color: "rgb(250,250,250)",
+                    fontSize:"60px"
+                },
+                512: {
+                    backgroundColor: "rgb(228,192,42)",
+                    color: "rgb(250,250,250)",
+                    fontSize:"60px"
+                },
+                1024: {
+                    backgroundColor: "rgb(227,186,18)",
+                    color: "rgb(250,250,250)",
+                    fontSize:"55px"
+                },
+                2048: {
+                    backgroundColor: "rgb(239,196,0)",
+                    color: "rgb(250,250,250)",
+                    fontSize:"55px"
+                }
+            },
+            ShowData: [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0]],
+            Score: 0,
+            LoginUser: {
+                uid: "",
+                pwd: ""
+            },
+            UserInfo: {
+                UserID:"@ViewBag.UserID"
+            },
+            GameState:"1"
+        },
+        methods: {
+            RefNum: function () {
+                this.ShowData = JSON.parse(JSON.stringify(this.ShowData));
+            },
+            TryUP: function () {
+                //判断上方是否有0或相同的数字
+                for (var i = 1; i < 4; i++) {
+                    for (var j = 0; j < 4; j++) {
+                        var a = this.ShowData[i][j];
+                        if (a != 0) {
+                            var b = this.ShowData[i - 1][j];
+                            if (b == 0 || a == b) {
+                                return true
+                            }
+                        }
+                    }
+                }
+                return false;
+            },
+            TryDown: function () {
+                //判断下方是否有0或相同的数字
+                for (var i = 2; i >=0; i--) {
+                    for (var j = 0; j < 4; j++) {
+                        var a = this.ShowData[i][j];
+                        if (a != 0) {
+                            var b = this.ShowData[i +1][j];
+                            if (b == 0 || a == b) {
+                                return true
+                            }
+                        }
+                    }
+                }
+                return false;
+            },
+            TryLeft: function () {
+                //判断左方是否有0或相同的数字
+                for (var i = 0; i <4; i++) {
+                    for (var j = 1; j < 4; j++) {
+                        var a = this.ShowData[i][j];
+                        if (a != 0) {
+                            var b = this.ShowData[i][j-1];
+                            if (b == 0 || a == b) {
+                                return true
+                            }
+                        }
+                    }
+                }
+                return false;
+            },
+            TryRight: function () {
+                //判断右方是否有0或相同的数字
+                for (var i = 0; i <4; i++) {
+                    for (var j = 2; j >= 0; j--) {
+                        var a = this.ShowData[i][j];
+                        if (a != 0) {
+                            var b = this.ShowData[i][j+1];
+                            if (b == 0 || a == b) {
+                                return true
+                            }
+                        }
+                    }
+                }
+                return false;
+            },
+            ScoreSubmit: function (type) {
+                var _this = this;
+                //提交成绩
+                if (type == 1) {
+                    if (!this.UserInfo || !this.UserInfo.UserID) {
+                        $('#Login_Box').modal('show')
+                        return;
+                    }
+                }
+                $.post("/Home/ScoreSubmit", { type: type }, function (res) {
+                    alert(res.Msg)
+                    if (type == 1) {
+                        window.location.href = "/Ranking/Index";
+                    }
+                    else {
+                        _this.Move(0);
+                    }
+                    
+                });
+
+            },
+            Login: function () {
+                if (!this.LoginUser || !this.LoginUser.uid || !this.LoginUser.pwd) {
+                    return;
+                }
+                var self = this;
+                $.post("/Login/Login", { uid: this.LoginUser.uid, pwd: this.LoginUser.pwd }, function (res) {
+                    if (res.Code == 2000) {
+                        self.UserInfo["UserID"] = self.LoginUser.uid;
+                        self.LoginUser = {};
+                        self.MaxScore = res.Data;
+                        self.Move(0);
+                        $('#Login_Box').modal('hide');
+                    }
+                    else {
+                        alert(res.Msg);
+                    }
+                });
+
+            },
+            Move: function (keycode) {
+                var _this = this;
+                $.post("/Home/UserMove", { keyCode: keycode }, function (res) {
+                    if (res.Code == 2000) {
+                        var s = 0;
+                        for (var i = 0; i < 4; i++) {
+                            for (var j = 0; j < 4; j++) {
+                                _this.ShowData[i][j] = res.Data[s];
+                                s++;
+                            }
+                        }
+                        _this.Score = res.Score
+                        _this.RefNum();
+                        _this.IsOver();
+                    }
+                    else {
+                        alert(res.Msg);
+                    }
+                });
+            },
+            IsOver: function () {
+                var _this = this;
+                if (_this.TryUP() || _this.TryRight() || _this.TryDown() || _this.TryLeft()) {
+                    return;
+                }
+                else {
+                    console.log("Game Over!")
+                    $.post("/Home/GameOver", function (res) {
+                        if (res.Code == 2000) {
+                            _this.GameState = 0;
+                            $('#Submit_Box').modal('show')
+                        }
+                    })
+                }
+                
+            }
+        },
+        created:function(){
+            var _this = this;
+            window.onkeydown = function (e) {
+                var IsMove = false;
+                switch (e.keyCode) {
+                    case 37:
+                        IsMove = _this.TryLeft()
+                        break
+                    case 38:
+                        IsMove = _this.TryUP();
+                        break
+                    case 39:
+
+                        IsMove = _this.TryRight();
+                        break
+                    case 40:
+                        IsMove = _this.TryDown()
+                        break
+                }
+                if (IsMove) {
+                    _this.Move(e.keyCode);
+                }
+            }
+        }
+    })
+    window.onload = function () {
+        vm.Move(0);
+    }
+</script>

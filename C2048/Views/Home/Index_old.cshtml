@@ -1,0 +1,369 @@
+﻿@{
+    ViewBag.Title = "1024";
+}
+<script src="~/Scripts/vue.js"></script>
+<div id="v-box">
+    <div>
+        <h1 v-show="UserInfo.UserID!=''">欢迎:{{UserInfo.UserID}}</h1>
+        <h2>历史最高分:{{MaxScore?MaxScore:Score}}</h2>
+        <h2>当前得分:{{Score}}<button role="button" data-toggle="modal" data-target="#Submit_Box">提交</button></h2>
+    </div>
+    <table class="table-bordered" v-on:keyup="KeyDown($event)" style="border:10px">
+        <tr v-for="(item,index) in ShowData">
+            <td v-for="(item2,index2) in item" v-bind:style="NumStyle[item2]" style="width:100px;height:100px;text-align:center; border:5px solid rgb(195, 171, 148)">
+                {{item2==0?"":item2}}
+            </td>
+        </tr>
+    </table>
+    <div role="dialog" class="modal fade bs-example-modal-sm" id="Submit_Box">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                    <h4 class="modal-title">{{GameState?"":"游戏结束"}}提交成绩?</h4>
+                </div>
+                <div class="modal-body text-right">
+                    <button data-dismiss="modal" class="btn btn-primary btn-sm">取消</button>
+                    <button data-dismiss="modal" class="btn btn-danger btn-sm" v-on:click="ScoreSubmit()">确认</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div role="dialog" class="modal fade bs-example-modal-sm" id="Login_Box">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                    <h4 class="modal-title">登陆</h4>
+                </div>
+                <div class="modal-body text-left">
+                    <div class="form-group">
+                        <label for="username">用户名:</label>
+                        <input type="text" id="uid" class="form-control" placeholder="输入用户名" v-model="LoginUser.uid">
+                    </div>
+                    <div class="form-group">
+                        <label for="username">密码:</label>
+                        <input type="password" id="pwd" class="form-control" placeholder="输入密码" v-model="LoginUser.pwd">
+                    </div>
+                    <div class="form-group">
+                        <button data-dismiss="modal" class="btn btn-danger btn-sm" v-on:click="Login()">登陆</button>
+                        <label>注：新用户直接注册</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+    var vm = new Vue({
+        el: "#v-box",
+        data: {
+            MaxScore: "@ViewBag.MaxScore",
+            NumStyle: {
+                0: {
+                    backgroundColor: "rgb(204,192,180)",
+                },
+                2: {
+                    backgroundColor: "rgb(237,227,217)",
+                    color: "rgb(118,108,99)",
+                    fontSize:"70px"
+                },
+                4: {
+                    backgroundColor: "rgb(239,224,203)",
+                    color: "rgb(119,107,95)",
+                    fontSize:"70px"
+                },
+                8: {
+                    backgroundColor: "rgb(242,176,126)",
+                    color: "rgb(254,242,231)",
+                    fontSize:"70px"
+                },
+                16: {
+                    backgroundColor: "rgb(250,150,90)",
+                    color: "rgb(249,227,229)",
+                    fontSize:"65px"
+                },
+                32: {
+                    backgroundColor: "rgb(250,122,99)",
+                    color: "rgb(247,247,247)",
+                    fontSize:"65px"
+                },
+                64: {
+                    backgroundColor: "rgb(250,91,63)",
+                    color: "rgb(247,247,247)",
+                    fontSize:"65px"
+                },
+                128: {
+                    backgroundColor: "rgb(238,227,17)",
+                    color: "rgb(247,247,247)",
+                    fontSize:"60px"
+                },
+                256: {
+                    backgroundColor: "rgb(246,207,78)",
+                    color: "rgb(250,250,250)",
+                    fontSize:"60px"
+                },
+                512: {
+                    backgroundColor: "rgb(228,192,42)",
+                    color: "rgb(250,250,250)",
+                    fontSize:"60px"
+                },
+                1024: {
+                    backgroundColor: "rgb(227,186,18)",
+                    color: "rgb(250,250,250)",
+                    fontSize:"55px"
+                },
+                2048: {
+                    backgroundColor: "rgb(239,196,0)",
+                    color: "rgb(250,250,250)",
+                    fontSize:"55px"
+                }
+            },
+            ShowData: [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0]],
+            Score: 0,
+            LoginUser: {
+                uid: "",
+                pwd: "",
+            },
+            UserInfo: {
+                UserID:"@ViewBag.UserID"
+            },
+            GameState:"1"
+        },
+        methods: {
+            RefNum: function () {
+                var x = parseInt(Math.random() * 4)
+                var y = parseInt(Math.random() * 4)
+                if (this.ShowData[x][y] == 0) {
+                    this.ShowData[x][y] = 2
+                    this.ShowData = JSON.parse(JSON.stringify(this.ShowData));
+                    return;
+                }
+                else {
+                    this.RefNum();
+                }
+            },
+            TryUP: function () {
+                //判断上方是否有0或相同的数字
+                for (var i = 1; i < 4; i++) {
+                    for (var j = 0; j < 4; j++) {
+                        var a = this.ShowData[i][j];
+                        if (a != 0) {
+                            var b = this.ShowData[i - 1][j];
+                            if (b == 0 || a == b) {
+                                return true
+                            }
+                        }
+                    }
+                }
+                return false;
+            },
+            TryDown: function () {
+                //判断下方是否有0或相同的数字
+                for (var i = 2; i > 0; i--) {
+                    for (var j = 0; j < 4; j++) {
+                        var a = this.ShowData[i][j];
+                        if (a != 0) {
+                            var b = this.ShowData[i +1][j];
+                            if (b == 0 || a == b) {
+                                return true
+                            }
+                        }
+                    }
+                }
+                return false;
+            },
+            TryLeft: function () {
+                //判断左方是否有0或相同的数字
+                for (var i = 0; i <4; i++) {
+                    for (var j = 1; j < 4; j++) {
+                        var a = this.ShowData[i][j];
+                        if (a != 0) {
+                            var b = this.ShowData[i][j-1];
+                            if (b == 0 || a == b) {
+                                return true
+                            }
+                        }
+                    }
+                }
+                return false;
+            },
+            TryRight: function () {
+                //判断右方是否有0或相同的数字
+                for (var i = 0; i <4; i++) {
+                    for (var j = 2; j > 0; j--) {
+                        var a = this.ShowData[i][j];
+                        if (a != 0) {
+                            var b = this.ShowData[i][j+1];
+                            if (b == 0 || a == b) {
+                                return true
+                            }
+                        }
+                    }
+                }
+                return false;
+            },
+            Up: function (_data) {
+                var flag = false;
+                for (var i = 0; i < 3; i++) {
+                    for (var j = 0; j <= 3; j++) {
+                        var a = _data[i][j];
+                        var b = _data[i + 1][j];
+                        if (b != 0 && (a == b || a == 0)) {
+                            _data[i][j] = a+b;
+                            _data[i + 1][j] = 0;
+                            flag = true;
+                            this.Score += a==b?b:0;
+                        }
+                    }
+                }
+                if (flag) {
+                    this.Up(_data);
+                }
+            },
+            Down: function (_data) {
+                var flag = false;
+                for (var i = 3; i > 0; i--) {
+                    for (var j = 0; j <= 3; j++) {
+                        var a = _data[i][j]
+                        var b = _data[i - 1][j]
+                        if (b != 0 && (a == b || a == 0)) {
+                            _data[i][j] = a + b;
+                            _data[i - 1][j] = 0;
+                            flag = true;
+                            this.Score += a == b ? b : 0;
+                        }
+                    }
+                }
+                if (flag) {
+                    this.Down(_data);
+                }
+            },
+            Left: function (_data) {
+                var flag = false;
+                for (var i = 0; i <= 3; i++) {
+                    for (var j = 0; j < 3; j++) {
+
+                        var a = _data[i][j]
+                        var b = _data[i][j + 1]
+                        if (b != 0 && (a == b || a == 0)) {
+                            _data[i][j] = a + b;
+                            _data[i][j + 1] = 0;
+                            flag = true;
+                            this.Score += a == b ? b : 0;
+                        }
+                    }
+                }
+                if (flag) {
+                    this.Left(_data);
+                }
+            },
+            Right: function (_data) {
+                var flag = false;
+                for (var i = 0; i <= 3; i++) {
+                    for (var j = 3; j > 0; j--) {
+                        var a = _data[i][j]
+                        var b = _data[i][j - 1]
+                        if (b != 0 && (a == b || a == 0)) {
+                            _data[i][j] = a + b;
+                            _data[i][j - 1] = 0;
+                            flag = true;
+                            this.Score += a == b ? b : 0;
+                        }
+                    }
+                }
+                if (flag) {
+                    this.Right(_data);
+                }
+            },
+            ScoreSubmit: function () {
+                //提交成绩
+                if (this.UserInfo && this.UserInfo.UserID) {
+                    $.post("/Home/ScoreSubmit", { Score: this.Score }, function (res) {
+                        alert(res.Msg)
+                        this.MaxScore = res.data;
+                    });
+                }
+                else {
+                    $('#Login_Box').modal('show')
+                }
+
+            },
+            Login: function () {
+                var self = this;
+                $.post("/Login/Login", { uid: this.LoginUser.uid, pwd: this.LoginUser.pwd }, function (res) {
+                    if (res.Code == 2000) {
+                        alert(res.Msg)
+                        self.UserInfo["UserID"] = self.LoginUser.uid;
+                        self.LoginUser = {};
+                        self.MaxScore = res.Data;
+                        if (self.GameState == 0) {
+                            self.ScoreSubmit();
+                        }
+                    }
+                    else {
+                        alert(res.Msg, _try);
+                    }
+                });
+            }
+        },
+        created:function(){
+            var _this = this;
+            window.onkeydown = function (e) {
+                //(浅复制)只值引用
+                var _data = JSON.parse(JSON.stringify(_this.ShowData));
+                var IsMove = false;
+                switch (e.keyCode){
+                    case 37:
+                        _this.Left(_data);
+                        IsMove = true;
+                        break;
+                    case 38:
+                        _this.Up(_data);
+                        IsMove = true;
+                        break;
+                    case 39:
+                        _this.Right(_data);
+                        IsMove = true;
+                        break;
+                    case 40:
+                        _this.Down(_data);
+                        IsMove = true;
+                        break;
+                }
+                //二维数组转化成字符串后直接比较
+                if (IsMove) {
+                    if (_this.ShowData.toString() != _data.toString()) {
+                        _this.ShowData = _data;
+                        _this.RefNum();
+
+                        if (_this.TryUP() || _this.TryRight() || _this.TryDown() || _this.TryLeft()) {
+                            return;
+                        }
+                        //游戏结束
+                        console.log("Game Over!")
+                        _this.GameState = 0;
+                        $('#Submit_Box').modal('show')
+                    }
+                }
+                
+
+            }
+        }
+    })
+    window.onload = function () {
+        vm.RefNum();
+    }
+</script>
